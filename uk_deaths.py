@@ -1,8 +1,9 @@
 #!/bin/env python3
 
 """
-Run this script on the "Daily Deaths" JSON data from:
+Run this script on the "Daily Deaths" JSON data from
 https://coronavirus.data.gov.uk/details/deaths
+Or use the uk_deaths.json file included here
 """
 
 import sys
