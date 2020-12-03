@@ -9,6 +9,7 @@ Or use the uk_deaths.json file included here
 import sys
 import json
 import dateutil
+import argparse
 import numpy
 import matplotlib.pyplot as plt
 
@@ -76,6 +77,14 @@ def derivatives(series: numpy.array, data: numpy.array):
     return series[:-1], numpy.true_divide(dData, dSeries)
 
 
+def smooth(w: int, data: numpy.array):
+    rv = numpy.zeros_like(data, dtype=numpy.float32)
+    cf = numpy.ones(w)
+    for i in range(data.shape[0]):
+        rv[i] = numpy.convolve(data[i], cf, mode="same") / w
+    return rv
+
+
 def plot_lockdowns(ax, date_start):
     for ld_start, ld_end in LOCKDOWNS:
         ax.axvline(x=(ld_start - date_start).days, c='r', linewidth=1)
@@ -92,6 +101,8 @@ def add_ticks(fig, nticks: int, series: list, dates: list):
 
 
 def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array):
+    data = smooth(7, data)
+
     d_series, d_nations = derivatives(series, data)
 
     # for each nation...
