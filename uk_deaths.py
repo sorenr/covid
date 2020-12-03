@@ -90,6 +90,11 @@ def plot_deaths(series: list, days: list, nations: dict):
         # plot the national deaths
         fig = plt.figure(nation)
         fig.suptitle(nation, fontsize=16)
+        plt.figtext(
+            0.02, 0.02,
+            "Data: coronavirus.data.gov.uk/details/deaths\n"
+            "Source: github.com/sorenr/covid/blob/main/uk_deaths.py",
+            fontsize=10)
         ax1 = fig.add_subplot(211)
         ax1.set_ylabel('deaths')
         ax1.bar(
