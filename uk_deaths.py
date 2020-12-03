@@ -88,7 +88,7 @@ def plot_deaths(series: list, days: list, nations: dict):
     # for each nation...
     for nation in sorted(nations.keys()):
         # plot the national deaths
-        fig = plt.figure(nation)
+        fig = plt.figure(nation, figsize=(11,8))
         fig.suptitle(nation, fontsize=16)
         plt.figtext(
             0.02, 0.02,
@@ -108,7 +108,7 @@ def plot_deaths(series: list, days: list, nations: dict):
         ax2.plot(d_series, d_nations[nation])
         ax2.axhline(y=0, linewidth=1, c='b')
         plot_lockdowns(ax2, days[0])
-    plt.show()
+        plt.savefig("{0:s}.png".format(nation), dpi=200)
 
 
 if __name__ == "__main__":
