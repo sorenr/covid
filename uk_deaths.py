@@ -9,6 +9,7 @@ Or use the uk_deaths.json file included here
 import sys
 import json
 import dateutil
+import numpy
 import matplotlib.pyplot as plt
 
 ALL = "United Kingdom"
@@ -54,30 +55,25 @@ def normalize_deaths(deaths: dict):
     days = list(sorted(deaths.keys()))
     day_first = days[0]
     days_total = (days[-1] - day_first).days + 1
-    series = []
-    nations = {ALL: [0] * days_total}
-    for day in days:
-        day_diff = (day - day_first).days
-        series.append(day_diff)
-        all_deaths = 0
+    series = numpy.array([(d - day_first).days for d in days], dtype=numpy.int32)
+    data = numpy.zeros(shape=(5, days_total), dtype=numpy.int32)
+    nations = {}
+    for i, day in enumerate(days):
+        si = series[i]
         for nation, nation_deaths in deaths[day].items():
-            if nation not in nations:
-                nations[nation] = [0] * days_total
-            nations[nation][day_diff] = nation_deaths
-            all_deaths += nation_deaths
-        nations[ALL][day_diff] = all_deaths
-    return series, days, nations
+            nation_i = nations.setdefault(nation, len(nations))
+            data[nation_i][si] = nation_deaths
+    # Add a nation entry for the UK
+    nation_i = nations.setdefault(ALL, len(nations))
+    # Put the sum in the last row
+    data[nation_i] = data[:nation_i].sum(axis=0)
+    return days, nations, series, data
 
 
-def derivatives(series: list, nations: dict):
-    d_series = []
-    d_nations = {}
-    for i in range(1, len(series)-1):
-        d_series.append(series[i])
-        for nation, deaths in nations.items():
-            dDdT = (deaths[i+1] - deaths[i-1]) / (series[i+1] - series[i-1])
-            d_nations.setdefault(nation, []).append(dDdT)
-    return d_series, d_nations
+def derivatives(series: numpy.array, data: numpy.array):
+    dData = data[:, 1:] - data[:, :-1]
+    dSeries = series[1:] - series[:-1]
+    return series[:-1], numpy.true_divide(dData, dSeries)
 
 
 def plot_lockdowns(ax, date_start):
@@ -95,11 +91,11 @@ def add_ticks(fig, nticks: int, series: list, dates: list):
     fig.xticks(locs, labels)
 
 
-def plot_deaths(series: list, days: list, nations: dict):
-    d_series, d_nations = derivatives(series, nations)
+def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array):
+    d_series, d_nations = derivatives(series, data)
 
     # for each nation...
-    for nation in sorted(nations.keys()):
+    for nation, nation_i in sorted(nations.items()):
         # plot the national deaths
         fig = plt.figure(nation, figsize=FIGSIZE)
         fig.suptitle(nation, fontsize=16)
@@ -111,7 +107,7 @@ def plot_deaths(series: list, days: list, nations: dict):
         ax1 = fig.add_subplot(211)
         ax1.set_ylabel('deaths')
         ax1.bar(
-            series, nations[nation],
+            series, data[nation_i],
             width=1)
         plot_lockdowns(ax1, days[0])
         add_ticks(plt, XTICKS, series, days)
@@ -119,10 +115,11 @@ def plot_deaths(series: list, days: list, nations: dict):
         # plot the national death derivatives
         ax2 = fig.add_subplot(212)
         ax2.set_ylabel('dDeath/dTime')
-        ax2.plot(d_series, d_nations[nation])
+        ax2.plot(d_series, d_nations[nation_i])
         ax2.axhline(y=0, linewidth=1, c='b')
         plot_lockdowns(ax2, days[0])
         add_ticks(plt, XTICKS, series, days)
+
         plt.savefig("{0:s}.png".format(nation), dpi=DPI)
     # plt.show()
 
@@ -136,5 +133,5 @@ if __name__ == "__main__":
 
     deaths = json.loads(deaths)
     deaths = read_deaths(deaths['data'])
-    series, days, nations = normalize_deaths(deaths)
-    plot_deaths(series, days, nations)
+    days, nations, series, data = normalize_deaths(deaths)
+    plot_deaths(days, nations, series, data)
