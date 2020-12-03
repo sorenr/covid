@@ -32,6 +32,10 @@ LOCKDOWNS = [
      dateutil.parser.parse('December 3 2020')]
 ]
 
+XTICKS = 16
+FIGSIZE = (12, 9)
+DPI = 200
+
 
 def read_deaths(data: list):
     deaths = {}
@@ -82,13 +86,22 @@ def plot_lockdowns(ax, date_start):
         ax.axvline(x=(ld_end - date_start).days, c='g', linewidth=1)
 
 
+def add_ticks(fig, nticks: int, series: list, dates: list):
+    locs = []
+    labels = []
+    for i in range(series[0], series[-1]+1, int(len(series)/(nticks-1))):
+        locs.append(series[i])
+        labels.append(dates[i].strftime('%m/%d'))
+    fig.xticks(locs, labels)
+
+
 def plot_deaths(series: list, days: list, nations: dict):
     d_series, d_nations = derivatives(series, nations)
 
     # for each nation...
     for nation in sorted(nations.keys()):
         # plot the national deaths
-        fig = plt.figure(nation, figsize=(11,8))
+        fig = plt.figure(nation, figsize=FIGSIZE)
         fig.suptitle(nation, fontsize=16)
         plt.figtext(
             0.02, 0.02,
@@ -101,6 +114,7 @@ def plot_deaths(series: list, days: list, nations: dict):
             series, nations[nation],
             width=1)
         plot_lockdowns(ax1, days[0])
+        add_ticks(plt, XTICKS, series, days)
 
         # plot the national death derivatives
         ax2 = fig.add_subplot(212)
@@ -108,7 +122,9 @@ def plot_deaths(series: list, days: list, nations: dict):
         ax2.plot(d_series, d_nations[nation])
         ax2.axhline(y=0, linewidth=1, c='b')
         plot_lockdowns(ax2, days[0])
-        plt.savefig("{0:s}.png".format(nation), dpi=200)
+        add_ticks(plt, XTICKS, series, days)
+        plt.savefig("{0:s}.png".format(nation), dpi=DPI)
+    # plt.show()
 
 
 if __name__ == "__main__":
