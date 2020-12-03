@@ -83,25 +83,26 @@ def plot_lockdowns(ax, date_start):
 
 
 def plot_deaths(series: list, days: list, nations: dict):
-    fig = plt.figure()
-    ax1 = fig.add_subplot(211)
-    ax1.set_ylabel('deaths')
-    ax1.bar(
-        # series, nations[ENGLAND],
-        # series, nations[N_IRELAND],
-        # series, nations[SCOTLAND],
-        # series, nations[WALES],
-        series, nations[ALL],
-        width=1)
-    plot_lockdowns(ax1, days[0])
-
     d_series, d_nations = derivatives(series, nations)
 
-    ax2 = fig.add_subplot(212)
-    ax2.set_ylabel('dDeath/dTime')
-    ax2.plot(d_series, d_nations[ALL])
-    ax2.axhline(y=0, linewidth=1, c='b')
-    plot_lockdowns(ax2, days[0])
+    # for each nation...
+    for nation in sorted(nations.keys()):
+        # plot the national deaths
+        fig = plt.figure(nation)
+        fig.suptitle(nation, fontsize=16)
+        ax1 = fig.add_subplot(211)
+        ax1.set_ylabel('deaths')
+        ax1.bar(
+            series, nations[nation],
+            width=1)
+        plot_lockdowns(ax1, days[0])
+
+        # plot the national death derivatives
+        ax2 = fig.add_subplot(212)
+        ax2.set_ylabel('dDeath/dTime')
+        ax2.plot(d_series, d_nations[nation])
+        ax2.axhline(y=0, linewidth=1, c='b')
+        plot_lockdowns(ax2, days[0])
     plt.show()
 
 
