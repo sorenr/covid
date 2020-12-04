@@ -35,7 +35,7 @@ LOCKDOWNS = [
 ]
 
 XTICKS = 16
-FIGSIZE = (14, 8)
+FIGSIZE = (14, 14)
 DPI = 200
 
 
@@ -122,7 +122,7 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
     for nation, nation_i in sorted(nations.items()):
         # plot the national deaths
         fig = plt.figure(nation, figsize=FIGSIZE)
-        fig.suptitle(nation, fontsize=16)
+        fig.suptitle(nation, fontsize=16, y=0.95)
         plt.figtext(
             0.02, 0.02,
             "Data: coronavirus.data.gov.uk/details/deaths\n"
