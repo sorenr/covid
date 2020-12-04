@@ -71,6 +71,15 @@ def normalize_deaths(deaths: dict):
     return days, nations, series, data
 
 
+def percent_change_on_previous_day(series: numpy.array, data: numpy.array):
+    day = data[:, 1:]
+    previous = data[:, :-1]
+    change = day - previous
+    d = numpy.true_divide(change, previous)
+    d /= series[1:] - series[:-1]
+    return series[1:], d * 100
+
+
 def derivatives(series: numpy.array, data: numpy.array):
     dData = data[:, 1:] - data[:, :-1]
     dSeries = series[1:] - series[:-1]
@@ -100,11 +109,14 @@ def add_ticks(fig, nticks: int, series: list, dates: list):
     fig.xticks(locs, labels)
 
 
-def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array, w=1, interactive=False):
-    if w > 1:
-        data = smooth(w, data)
+def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array, args):
+    if args.smooth > 1:
+        data = smooth(args.smooth, data)
 
-    d_series, d_nations = derivatives(series, data)
+    if args.pcopd:
+        d_series, d_nations = percent_change_on_previous_day(series, data)
+    else:
+        d_series, d_nations = derivatives(series, data)
 
     # for each nation...
     for nation, nation_i in sorted(nations.items()):
@@ -118,29 +130,32 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
             fontsize=10)
         ax1 = fig.add_subplot(211)
         ylabel = 'deaths'
-        if w > 1:
-            ylabel += ' ({0:d} day moving avg)'.format(w)
+        if args.smooth > 1:
+            ylabel += ' ({0:d} day moving avg)'.format(args.smooth)
         ax1.set_ylabel(ylabel)
         ax1.bar(
             series, data[nation_i],
             width=1)
         plot_lockdowns(ax1, days[0])
-        if not interactive:
+        if not args.interactive:
             add_ticks(plt, XTICKS, series, days)
 
         # plot the national death derivatives
         ax2 = fig.add_subplot(212)
-        ax2.set_ylabel('dDeath/dTime')
+        if args.pcopd:
+            ax2.set_ylabel('% change on previous day')
+        else:
+            ax2.set_ylabel('dDeath/dTime')
         ax2.plot(d_series, d_nations[nation_i])
         ax2.axhline(y=0, linewidth=1, c='b')
         plot_lockdowns(ax2, days[0])
-        if not interactive:
+        if not args.interactive:
             add_ticks(plt, XTICKS, series, days)
 
-        if not interactive:
+        if not args.interactive:
             plt.savefig("{0:s}.png".format(nation), dpi=DPI)
 
-    if interactive:
+    if args.interactive:
         plt.show()
 
 
@@ -149,6 +164,7 @@ if __name__ == "__main__":
     parser.add_argument('--smooth', metavar='W', type=int, default=1,
                         help='smooth the dataset')
     parser.add_argument('--interactive', action='store_true', help='display charts interactively')
+    parser.add_argument('--pcopd', action='store_true', help='compute "% change on previous day" rather than derivative')
     parser.add_argument('stats', metavar='DATA.json', type=str,
                         help='JSON file from https://coronavirus.data.gov.uk/details/deaths')
 
@@ -160,4 +176,4 @@ if __name__ == "__main__":
     deaths = json.loads(deaths)
     deaths = read_deaths(deaths['data'])
     days, nations, series, data = normalize_deaths(deaths)
-    plot_deaths(days, nations, series, data, w=args.smooth, interactive=args.interactive)
+    plot_deaths(days, nations, series, data, args)
