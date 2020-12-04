@@ -100,8 +100,9 @@ def add_ticks(fig, nticks: int, series: list, dates: list):
     fig.xticks(locs, labels)
 
 
-def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array):
-    data = smooth(7, data)
+def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array, w=1):
+    if w > 1:
+        data = smooth(w, data)
 
     d_series, d_nations = derivatives(series, data)
 
@@ -116,7 +117,10 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
             "Source: github.com/sorenr/covid/blob/main/uk_deaths.py",
             fontsize=10)
         ax1 = fig.add_subplot(211)
-        ax1.set_ylabel('deaths')
+        ylabel = 'deaths'
+        if w > 1:
+            ylabel += ' ({0:d} day moving avg)'.format(w)
+        ax1.set_ylabel(ylabel)
         ax1.bar(
             series, data[nation_i],
             width=1)
@@ -136,13 +140,18 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
 
 
 if __name__ == "__main__":
-    if len(sys.argv) <= 1:
-        deaths = sys.stdin.read()
-    else:
-        with open(sys.argv[1], 'r') as fd:
-            deaths = fd.read()
+    parser = argparse.ArgumentParser(description="Plot daily UK deaths from national statistics.")
+    parser.add_argument('--smooth', metavar='W', type=int, default=1,
+                        help='smooth the dataset')
+    parser.add_argument('stats', metavar='DATA.json', type=str,
+                        help='JSON file from https://coronavirus.data.gov.uk/details/deaths')
+
+    args = parser.parse_args()
+
+    with open(args.stats, 'r') as fd:
+        deaths = fd.read()
 
     deaths = json.loads(deaths)
     deaths = read_deaths(deaths['data'])
     days, nations, series, data = normalize_deaths(deaths)
-    plot_deaths(days, nations, series, data)
+    plot_deaths(days, nations, series, data, w=args.smooth)
