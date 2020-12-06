@@ -27,12 +27,30 @@ POPULATIONS = {
 }
 POPULATIONS[ALL] = sum(POPULATIONS.values())
 
-LOCKDOWNS = [
-    [dateutil.parser.parse('March 23 2020'),
-     dateutil.parser.parse('July 4 2020')],
-    [dateutil.parser.parse('November 5 2020'),
-     dateutil.parser.parse('December 3 2020')]
-]
+LOCKDOWNS = {
+    ENGLAND: [
+        [dateutil.parser.parse('March 23 2020'),
+         dateutil.parser.parse('July 4 2020')],
+        [dateutil.parser.parse('November 5 2020'),
+         dateutil.parser.parse('December 3 2020')]
+     ],
+    N_IRELAND: [
+        [dateutil.parser.parse('October 16 2020'),
+         dateutil.parser.parse('November 20 2020')],
+        [dateutil.parser.parse('November 27 2020'),
+         None]
+     ],
+    SCOTLAND: [
+        [dateutil.parser.parse('October 23 2020'),
+         dateutil.parser.parse('November 9 2020')],
+        [dateutil.parser.parse('November 20 2020'),
+         None]
+     ],
+    WALES: [
+        [dateutil.parser.parse('October 23 2020'),
+         dateutil.parser.parse('November 9 2020')],
+     ]
+}
 
 XTICKS = 16
 FIGSIZE = (14, 14)
@@ -94,10 +112,12 @@ def smooth(w: int, data: numpy.array):
     return rv
 
 
-def plot_lockdowns(ax, date_start):
-    for ld_start, ld_end in LOCKDOWNS:
-        ax.axvline(x=(ld_start - date_start).days, c='r', linewidth=1)
-        ax.axvline(x=(ld_end - date_start).days, c='g', linewidth=1)
+def plot_lockdowns(nation, ax, date_start):
+    for ld_start, ld_end in LOCKDOWNS.get(nation, [[None, None]]):
+        if ld_start is not None:
+            ax.axvline(x=(ld_start - date_start).days, c='r', linewidth=1)
+        if ld_end is not None:
+            ax.axvline(x=(ld_end - date_start).days, c='g', linewidth=1)
 
 
 def add_ticks(fig, nticks: int, series: list, dates: list):
@@ -136,7 +156,7 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
         ax1.bar(
             series, data[nation_i],
             width=1)
-        plot_lockdowns(ax1, days[0])
+        plot_lockdowns(nation, ax1, days[0])
         if not args.interactive:
             add_ticks(plt, XTICKS, series, days)
 
@@ -148,7 +168,7 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
             ax2.set_ylabel('dDeath/dTime')
         ax2.plot(d_series, d_nations[nation_i])
         ax2.axhline(y=0, linewidth=1, c='b')
-        plot_lockdowns(ax2, days[0])
+        plot_lockdowns(nation, ax2, days[0])
         if not args.interactive:
             add_ticks(plt, XTICKS, series, days)
 
