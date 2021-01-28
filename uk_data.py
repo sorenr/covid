@@ -3,7 +3,7 @@
 """
 Run this script on the "Daily Deaths" JSON data from
 https://coronavirus.data.gov.uk/details/deaths
-Or use the uk_deaths.json file included here
+Or use the uk_data.json file included here
 """
 
 import json
@@ -58,36 +58,37 @@ FIGSIZE = (14, 14)
 DPI = 200
 
 
-def read_deaths(data: list):
-    deaths = {}
-    for i, row in enumerate(data):
+def read_data(table: list):
+    data = {}
+    for i, row in enumerate(table):
         nation = row['areaName']
         date = dateutil.parser.parse(row['date'])
-        deaths_new = row['newDeaths28DaysByDeathDate']
-        if deaths_new is None:
+        data_new = row['newDeaths28DaysByDeathDate']
+        if data_new is None:
             continue
-        nation_dates = deaths.setdefault(date, {})
-        nation_dates[nation] = deaths_new
-    return deaths
+        nation_dates = data.setdefault(date, {})
+        nation_dates[nation] = data_new
+    return data
 
 
-def normalize_deaths(deaths: dict):
-    days = list(sorted(deaths.keys()))
+def normalize_data(data: dict):
+    print(data)
+    days = list(sorted(data.keys()))
     day_first = days[0]
     days_total = (days[-1] - day_first).days + 1
     series = numpy.array([(d - day_first).days for d in days], dtype=numpy.int32)
-    data = numpy.zeros(shape=(5, days_total), dtype=numpy.int32)
+    arr = numpy.zeros(shape=(5, days_total), dtype=numpy.int32)
     nations = {}
     for i, day in enumerate(days):
         si = series[i]
-        for nation, nation_deaths in deaths[day].items():
+        for nation, nation_data in data[day].items():
             nation_i = nations.setdefault(nation, len(nations))
-            data[nation_i][si] = nation_deaths
+            arr[nation_i][si] = nation_data
     # Add a nation entry for the UK
     nation_i = nations.setdefault(ALL, len(nations))
     # Put the sum in the last row
-    data[nation_i] = data[:nation_i].sum(axis=0)
-    return days, nations, series, data
+    arr[nation_i] = arr[:nation_i].sum(axis=0)
+    return days, nations, series, arr
 
 
 def percent_change_on_previous_day(series: numpy.array, data: numpy.array):
@@ -130,7 +131,7 @@ def add_ticks(fig, nticks: int, series: list, dates: list):
     fig.xticks(locs, labels)
 
 
-def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.array, args):
+def plot_data(days: list, nations: dict, series: numpy.array, data: numpy.array, args):
     if args.smooth > 1:
         data = smooth(args.smooth, data)
 
@@ -147,7 +148,7 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
         plt.figtext(
             0.02, 0.02,
             "Data: coronavirus.data.gov.uk/details/deaths\n"
-            "Source: github.com/sorenr/covid/blob/main/uk_deaths.py",
+            "Source: github.com/sorenr/covid/blob/main/uk_data.py",
             fontsize=10)
         ax1 = fig.add_subplot(211)
         ylabel = 'deaths'
@@ -180,7 +181,7 @@ def plot_deaths(days: list, nations: dict, series: numpy.array, data: numpy.arra
         plt.show()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Plot daily UK deaths from national statistics.")
     parser.add_argument('--smooth', metavar='W', type=int, default=1,
                         help='smooth the dataset')
@@ -192,9 +193,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with open(args.stats, 'r') as fd:
-        deaths = fd.read()
+        data = fd.read()
 
-    deaths = json.loads(deaths)
-    deaths = read_deaths(deaths['data'])
-    days, nations, series, data = normalize_deaths(deaths)
-    plot_deaths(days, nations, series, data, args)
+    data = json.loads(data)
+    assert(data)
+    data = read_data(data['data'])
+    assert(data)
+    days, nations, series, data = normalize_data(data)
+    plot_data(days, nations, series, data, args)
+
+
+if __name__ == "__main__":
+    main()
