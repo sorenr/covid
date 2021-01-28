@@ -6,7 +6,6 @@ https://coronavirus.data.gov.uk/details/deaths
 Or use the uk_deaths.json file included here
 """
 
-import sys
 import json
 import dateutil
 import argparse
@@ -32,7 +31,9 @@ LOCKDOWNS = {
         [dateutil.parser.parse('March 23 2020'),
          dateutil.parser.parse('July 4 2020')],
         [dateutil.parser.parse('November 5 2020'),
-         dateutil.parser.parse('December 3 2020')]
+         dateutil.parser.parse('December 3 2020')],
+        [dateutil.parser.parse('January 4 2021'),
+         None]
      ],
     N_IRELAND: [
         [dateutil.parser.parse('October 16 2020'),
