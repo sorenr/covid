@@ -7,13 +7,13 @@ import numpy
 conditions = {}
 categories = {}
 
-with open('conditions.csv', newline='') as csvfile:
+with open('causes.csv', newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=',', quotechar='"')
     for row in reader:
-        as_of, wk_start, wk_end, state, category, condition, icd10, age, ndeaths, flag = row
+        as_of, wk_start, wk_end, state, category, condition, icd10, age, ndeaths, mentions, flag = row
 
         # disregard "all ages"
-        if age != "All ages":
+        if age.lower() != "all ages":
             continue
 
         # disregard no deaths
