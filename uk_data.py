@@ -33,7 +33,7 @@ LOCKDOWNS = {
         [dateutil.parser.parse('November 5 2020'),
          dateutil.parser.parse('December 3 2020')],
         [dateutil.parser.parse('January 4 2021'),
-         None]
+         dateutil.parser.parse('April 12 2021')]
      ],
     N_IRELAND: [
         [dateutil.parser.parse('October 16 2020'),
