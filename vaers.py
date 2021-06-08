@@ -93,7 +93,7 @@ def parse(vax_files, symptoms=None):
     return vax_data
 
 
-def plot(vax_data, args, title="Adverse Reaction"):
+def plot(vax_data, args, title="Adverse Reactions"):
     """Plot symptom onset frequency"""
     days_min = 99999
     days_max = -days_min
@@ -126,40 +126,56 @@ def plot(vax_data, args, title="Adverse Reaction"):
         print(vax_frequency[vax_name], vax_name, "reports", min(vax_dt.keys()), "-", max(vax_dt.keys()), "days")
         x = [0]
         y = [0]
-        for i in vax_onsets:
-            reports_t = vax_dt.get(i, 0)
-            reports += reports_t
-            yt = 100 * reports_t / vax_frequency[vax_name]
-            if not y or y[-1] or yt:
-                it = abs(i)
-                if x and x[-1] < it - 1:
-                    x.append(it - 1)
-                    y.append(0.0)
-                ymax = max(ymax, yt)
-                x.append(it)
-                y.append(yt)
+
+        if args.acc:
+            yacc = 0
+            for i in vax_onsets:
+                yt = vax_dt.get(i, 0)
+                yacc += yt
+                if y[-1] != yacc:
+                    x.append(i)
+                    y.append(yacc)
+            reports += y[-1]
+            y = [yt / y[-1] * 100 for yt in y]
+            ymax = 100
+        else:
+            for i in vax_onsets:
+                yt = vax_dt.get(i, 0)
+                reports += yt
+                if y[-1] or yt:
+                    it = abs(i)
+                    if x and x[-1] < it - 1:
+                        x.append(it - 1)
+                        y.append(0.0)
+                    yt /= vax_frequency[vax_name]
+                    yt *= 100
+                    ymax = max(ymax, yt)
+                    x.append(it)
+                    y.append(yt)
+
         plt.plot([i + GLOBAL_OFFSET for i in x], y, label=vax_name)
     plt.xscale("log")
     # enable this for log scale y
-    yscale = 0.95
     if args.ylog:
-        yscale = pow(yscale, 10)
+        yscale = pow(0.95, 10)
         plt.yscale("log")
         plt.ylim(0.001, ymax)
     else:
-        plt.ylim(0, ymax)
-    plt.ylabel("% Adverse Reactions")
+        yscale = 1.02
+        plt.ylim(0, ymax * pow(yscale, 3))
+    plt.ylabel(f"% {title}s")
     plt.vlines([x + GLOBAL_OFFSET for x in XLABELS.values()], 0, ymax * yscale, linestyles="dotted")
-    plt.legend(fontsize="x-small")
     if args.prevax:
+        plt.legend(fontsize="x-small", loc="upper left")
         plt.xlabel(f"{title} Onset (-Days)")
         plt.gca().invert_xaxis()
-        plt.title(f'VAERS Adverse Reactions Misreported Before Vaccination ({reports:,} Misreports)')
+        plt.title(f"VAERS {title}s Misreported Before Vaccination ({reports:,} Misreports)")
         sign_prevax = '-'
         ha = 'right'
     else:
+        plt.legend(fontsize="x-small", loc="upper right")
         plt.xlabel(f"{title} Onset (Days)")
-        plt.title(f'VAERS Adverse Reactions Reported After Vaccination ({reports:,} Reports)')
+        plt.title(f"VAERS {title}s Reported After Vaccination ({reports:,} Reports)")
         sign_prevax = ''
         ha = 'left'
     for label, label_x in XLABELS.items():
@@ -177,6 +193,7 @@ def main():
     parser.add_argument('--symptoms', type=str, nargs="+", help="filter symptoms")
     parser.add_argument('--prevax', action="store_true", help="show pre-vaccination reports (reactions before vaccination)")
     parser.add_argument('--ylog', action="store_true", help="plot Y axis in log")
+    parser.add_argument('--acc', action="store_true", help="accumulate")
     parser.add_argument('stats', metavar='DATA.csv', type=str, nargs="+",
                         help='CSV files from https://vaers.hhs.gov/data/datasets.html')
 
@@ -186,7 +203,7 @@ def main():
 
     title = "Adverse Reaction"
     if args.symptoms:
-        title = ",".join([x.capitalize() for x in parser.symptoms])
+        title = ",".join([x.capitalize() for x in args.symptoms])
 
     plot(vax_data, args, title=title)
 
