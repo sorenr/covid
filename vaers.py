@@ -62,6 +62,7 @@ SYMPTOM_EXP = {
     'atrial fibrillation': 'atrial fibrillation (irregular heart rate)',
     'cellulitis': 'cellulitis (skin infection)',
     'contusion': 'contusion (bruise)',
+    'contusion': 'contusion (bruise)',
     'cyanosis': 'cyanosis (blue tint of the skin)',
     'deep vein thrombosis': 'deep vein thrombosis (blood clot)',
     'dermatitis bullous': 'dermatitis bullous (blisters)',
@@ -72,7 +73,7 @@ SYMPTOM_EXP = {
     'dyspepsia': 'dyspepsia (indigestion)',
     'dysphagia': 'dysphagia (difficulty swallowing)',
     'dysphonia': 'dysphonia (abnormal voice)',
-    'dyspnoea': 'dyspnoea (laboured breathing)',
+    'computerised tomogram': 'computerised tomogram (CT imaging/"CAT scan")',
     'dysstasia': 'dysstasia (difficulty standing)',
     'eye pruritus': 'eye pruritus (itchy eye)',
     'epistaxis': 'epistaxis (nosebleed)',
@@ -120,7 +121,7 @@ SYMPTOM_EXP = {
     'presyncope': 'presyncope (going to faint)',
     'pruritus': 'pruritus (itch)',
     'pulmonary embolism': 'pulmonary embolism (arterial blockage, lung)',
-    'pyrexia': 'pyrexia (raised body temperature)',
+    'pyrexia': 'pyrexia (fever)',
     'rash erythematous': 'rash erythematous (inflamed capillaries)',
     'rash macular': 'rash macular (small red spots)',
     'rash maculo-papular': 'rash maculo-papular (small raised red bumps)',
@@ -354,19 +355,21 @@ def chunk(n, chunks, lst):
 
 
 def plot_vaxfreq(vax_data, args):
+    print("VAXFREQ")
     reports = vax_data[REPORTS]
     vax_data = {k: v for k, v in vax_data.items() if k != REPORTS}
 
     pos = []
     labels = []
     frequency = []
-    rows = args.n or 500
+    rows = args.n
     for i, (k, v) in enumerate(sorted(vax_data.items(), reverse=True, key=lambda kv: kv[1])):
         pos.append(i)
         label = SYMPTOM_EXP.get(k, k)
         label = '{1:s} #{0:d}'.format(i+1, label)
         labels.append(label)
         frequency.append(v)
+        print(v, label)
         if i+1 >= rows:
             break
 
@@ -375,9 +378,15 @@ def plot_vaxfreq(vax_data, args):
         labels_c = chunk(ci, args.chunks, labels)
         frequency_c = chunk(ci, args.chunks, frequency)
 
+        # print each report to stdout
+        for l, f in zip(labels_c, frequency_c):
+            print(f, l)
+
         pos_c = [c - pos_c[0] for c in pos_c]
 
-        plt.figure(num=ci, figsize=(8, 11))
+        ysize = len(frequency_c) * 0.1
+
+        plt.figure(num=ci, figsize=(8, ysize))
         plt.rc('xtick', labelsize=8)
         plt.barh(pos_c, frequency_c, align='center')
 
@@ -396,10 +405,10 @@ def plot_vaxfreq(vax_data, args):
 
 def main():
     parser = argparse.ArgumentParser(description="Plot VAERS onset data.")
-    parser.add_argument('-n', type=int, help="show N entries")
+    parser.add_argument('-n', default=500, type=int, help="show N entries")
     parser.add_argument('--chunks', type=int, default=1, help="split chart into N chunks")
     parser.add_argument('--symptoms', type=str, nargs="+", help="require these symptoms")
-    parser.add_argument('--vaxfreq', type=str, nargs="*", help="plot symptom frequency")
+    parser.add_argument('--vaxfreq', type=str, nargs=1, help="plot symptom frequency")
     parser.add_argument('--death', action="store_true", help="deaths only")
     parser.add_argument('--vax', nargs='+', help="count these vaccinations only")
     parser.add_argument('--prevax', action="store_true", help="show pre-vaccination reports (events before vaccination)")
@@ -409,7 +418,6 @@ def main():
                         help='CSV files from https://vaers.hhs.gov/data/datasets.html')
 
     args = parser.parse_args()
-
 
     if args.vaxfreq:
         with shelve.open('vax_data_vaxfreq') as vax_data:
