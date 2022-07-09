@@ -373,10 +373,12 @@ def plot_vaxfreq(vax_data, args):
         if i+1 >= rows:
             break
 
-    for ci in range(args.chunks or 1):
-        pos_c = chunk(ci, args.chunks, pos)
-        labels_c = chunk(ci, args.chunks, labels)
-        frequency_c = chunk(ci, args.chunks, frequency)
+    chunks = int(round(len(labels) / args.chunksize))
+
+    for ci in range(chunks or 1):
+        pos_c = chunk(ci, chunks, pos)
+        labels_c = chunk(ci, chunks, labels)
+        frequency_c = chunk(ci, chunks, frequency)
 
         # print each report to stdout
         for l, f in zip(labels_c, frequency_c):
@@ -401,12 +403,13 @@ def plot_vaxfreq(vax_data, args):
         plt.title(title, fontsize=11)
         plt.subplots_adjust(left=0.32, right=.985, top=0.97, bottom=0.03)
         plt.savefig("vaxfreq{0:d}.png".format(ci + 1), dpi=300)
+        plt.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description="Plot VAERS onset data.")
-    parser.add_argument('-n', default=500, type=int, help="show N entries")
-    parser.add_argument('--chunks', type=int, default=1, help="split chart into N chunks")
+    parser.add_argument('-n', default=400, type=int, help="show N entries")
+    parser.add_argument('--chunksize', type=int, default=100, help="Chunks have N entries each")
     parser.add_argument('--symptoms', type=str, nargs="+", help="require these symptoms")
     parser.add_argument('--vaxfreq', type=str, nargs=1, help="plot symptom frequency")
     parser.add_argument('--death', action="store_true", help="deaths only")
