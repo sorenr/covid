@@ -363,15 +363,27 @@ def plot_vaxfreq(vax_data, args):
     labels = []
     frequency = []
     rows = args.n
-    for i, (k, v) in enumerate(sorted(vax_data.items(), reverse=True, key=lambda kv: kv[1])):
+    i = 0
+    v_last = None
+
+    # print each report to stdout
+    fd_vaxfreq = open("vaxfreq.txt", "w")
+
+    for k, v in sorted(vax_data.items(), reverse=True, key=lambda kv: kv[1]):
+        if v_last is None or v_last != v:
+            v_last = v
+            i += 1
         pos.append(i)
         label = SYMPTOM_EXP.get(k, k)
-        label = '{1:s} #{0:d}'.format(i+1, label)
+        label = f"{label:s} #{i:d}"
         labels.append(label)
         frequency.append(v)
         print(v, label)
+        fd_vaxfreq.write(f"{v} {label}\n")
         if i+1 >= rows:
             break
+
+    fd_vaxfreq.close()
 
     chunks = int(round(len(labels) / args.chunksize))
 
@@ -379,10 +391,6 @@ def plot_vaxfreq(vax_data, args):
         pos_c = chunk(ci, chunks, pos)
         labels_c = chunk(ci, chunks, labels)
         frequency_c = chunk(ci, chunks, frequency)
-
-        # print each report to stdout
-        for l, f in zip(labels_c, frequency_c):
-            print(f, l)
 
         pos_c = [c - pos_c[0] for c in pos_c]
 
@@ -402,7 +410,7 @@ def plot_vaxfreq(vax_data, args):
         title = f"{reports:,d} {symlist:s} Unverified VAERS Reports By Symptom Frequency"
         plt.title(title, fontsize=11)
         plt.subplots_adjust(left=0.32, right=.985, top=0.97, bottom=0.03)
-        plt.savefig("vaxfreq{0:d}.png".format(ci + 1), dpi=300)
+        plt.savefig("vaxfreq{0:04d}.png".format(ci + 1), dpi=300)
         plt.close()
 
 
