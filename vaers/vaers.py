@@ -361,10 +361,10 @@ def plot_vaxfreq(vax_data, args):
     reports = vax_data[REPORTS]
     vax_data = {k: v for k, v in vax_data.items() if k != REPORTS}
 
-    pos = []
+    rank = []
     labels = []
+    labels_v = []
     frequency = []
-    rows = args.n
     i = 0
     v_last = None
 
@@ -375,26 +375,25 @@ def plot_vaxfreq(vax_data, args):
         if v_last is None or v_last != v:
             v_last = v
             i += 1
-        pos.append(i)
+        rank.append(i)
         label = SYMPTOM_EXP.get(k, k)
         label = f"{label:s} #{i:d}"
         labels.append(label)
+        labels_v.append(label)
         frequency.append(v)
         print(v, label)
         fd_vaxfreq.write(f"{v} {label}\n")
-        if i+1 >= rows:
-            break
 
     fd_vaxfreq.close()
 
     chunks = int(round(len(labels) / args.chunksize))
 
-    for ci in range(chunks or 1):
-        pos_c = chunk(ci, chunks, pos)
+    for ci in range(min(4, chunks or 1)):
+        rank_c = chunk(ci, chunks, rank)
+        pos_c = range(len(rank_c))
         labels_c = chunk(ci, chunks, labels)
         frequency_c = chunk(ci, chunks, frequency)
-
-        pos_c = [c - pos_c[0] for c in pos_c]
+        rank_c = [c - rank_c[0] for c in rank_c]
 
         ysize = len(frequency_c) * 0.1
 
