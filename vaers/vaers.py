@@ -297,7 +297,7 @@ def plot_onset(vax_data, args):
                     it = abs(i)
                     if x and x[-1] < it - 1:
                         x.append(it - 1)
-                        y.append(0.0)
+                        y.append(0)
                     yt /= vax_frequency[vax_name]
                     yt *= 100
                     ymax = max(ymax, yt)
