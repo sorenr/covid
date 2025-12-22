@@ -94,6 +94,7 @@ SYMPTOM_EXP = {
     'induration': 'induration (inflamed stiffness)',
     'injection site cellulitis': 'injection site cellulitis (skin infection)',
     'injection site erythema': 'injection site erythema (redness)',
+    'injection site induration': 'injection site induration (swelling or hardening)',
     'injection site oedema': 'injection site oedema (swelling)',
     'injection site pruritus': 'injection site pruritus (itch)',
     'injection site urticaria': 'injection site urticaria (hives)',
