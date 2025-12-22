@@ -396,30 +396,32 @@ def plot_vaxfreq(vax_data, args):
         frequency_c = chunk(ci, chunks, frequency)
         rank_c = [c - rank_c[0] for c in rank_c]
 
-        ysize = len(frequency_c) * 0.1
+        YSIZE = 16
+        XSIZE = 12
+        FONTSIZE = 16
 
-        plt.figure(num=ci, figsize=(8, ysize))
-        plt.rc('xtick', labelsize=8)
+        plt.figure(num=ci, figsize=(XSIZE, YSIZE))
+        plt.rc('xtick', labelsize=FONTSIZE)
         plt.barh(pos_c, frequency_c, align='center')
 
         for p, f in zip(pos_c, frequency_c):
-            plt.text(f, p + 0.25, f" {f:,d}", fontsize=6)
+            plt.text(f, p + 0.25, f" {f:,d}", fontsize=FONTSIZE)
 
-        plt.yticks(pos_c, labels_c, fontsize=6)
-        plt.xlim(0, max(frequency) * 1.08)
+        plt.yticks(pos_c, labels_c, fontsize=FONTSIZE)
+        plt.xlim(0, max(frequency) * 1.2)
         plt.ylim((max(pos_c) + .5), -0.5)
         symlist = ", ".join(args.vaxfreq)
-        title = f"{reports:,d} {symlist:s} Unverified VAERS Reports By Symptom Frequency"
-        plt.title(title, fontsize=11)
-        plt.subplots_adjust(left=0.32, right=.985, top=0.97, bottom=0.03)
-        plt.savefig("vaxfreq{0:04d}.png".format(ci + 1), dpi=300)
+        title = f"{reports:,d} Unverified {symlist:s} VAERS Reports By Frequency"
+        plt.suptitle(title, fontsize=FONTSIZE*1.4)
+        plt.subplots_adjust(left=0.45, right=1.02, top=0.95, bottom=0.03)
+        plt.savefig("vaxfreq{0:04d}.png".format(ci + 1), dpi=200)
         plt.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description="Plot VAERS onset data.")
     parser.add_argument('-n', default=400, type=int, help="show N entries")
-    parser.add_argument('--chunksize', type=int, default=100, help="Chunks have N entries each")
+    parser.add_argument('--chunksize', type=int, default=50, help="Chunks have N entries each")
     parser.add_argument('--symptoms', type=str, nargs="+", help="require these symptoms")
     parser.add_argument('--vaxfreq', type=str, nargs=1, help="plot symptom frequency")
     parser.add_argument('--death', action="store_true", help="deaths only")
