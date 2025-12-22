@@ -185,7 +185,8 @@ def parse_vaxfreq(vax_data, vax_data_csv, detail_data, symptom_data, args):
         vax_rows = vax_data_csv
     else:
         vax_rows = vax_data_csv[vax_data_csv[VAX_TYPE].isin(args.vaxfreq)]
-    symptom_join = vax_rows.join(symptom_data.set_index(VAERS_ID), on=VAERS_ID)
+    symptom_join = vax_rows.join(symptom_data.set_index(VAERS_ID), on=VAERS_ID, rsuffix='_symptom')
+    print(symptom_join)
     columns = [x for x in symptom_join.keys() if re_symptoms.match(x)]
     for i, row in symptom_join[columns].iterrows():
         row = {x.lower() for x in row if isinstance(x, str)}
